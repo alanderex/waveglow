@@ -38,6 +38,7 @@ from torch.utils.data import DataLoader
 from glow import WaveGlow, WaveGlowLoss
 from mel2samp import Mel2Samp
 
+
 def load_checkpoint(checkpoint_path, model, optimizer):
     assert os.path.isfile(checkpoint_path)
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
@@ -151,9 +152,11 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
 
             iteration += 1
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str,
+                        default='config.json',
                         help='JSON file for configuration')
     parser.add_argument('-r', '--rank', type=int, default=0,
                         help='rank of process for distributed')
@@ -166,11 +169,8 @@ if __name__ == "__main__":
         data = f.read()
     config = json.loads(data)
     train_config = config["train_config"]
-    global data_config
     data_config = config["data_config"]
-    global dist_config
     dist_config = config["dist_config"]
-    global waveglow_config
     waveglow_config = config["waveglow_config"]
 
     num_gpus = torch.cuda.device_count()
