@@ -80,7 +80,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
         model = apply_gradient_allreduce(model)
     # =====END:   ADDED FOR DISTRIBUTED======
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.FusedAdam(model.parameters(), lr=learning_rate)
 
     if fp16_run:
         from apex import amp
