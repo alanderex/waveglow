@@ -45,6 +45,7 @@ class WaveGlowLoss(torch.nn.Module):
         super(WaveGlowLoss, self).__init__()
         self.sigma = sigma
 
+    # noinspection PyUnboundLocalVariable
     def forward(self, model_output):
         z, log_s_list, log_det_W_list = model_output
         for i, log_s in enumerate(log_s_list):
@@ -52,7 +53,7 @@ class WaveGlowLoss(torch.nn.Module):
                 log_s_total = torch.sum(log_s)
                 log_det_W_total = log_det_W_list[i]
             else:
-                log_s_total = log_s_total + torch.sum(log_s)
+                log_s_total += torch.sum(log_s)
                 log_det_W_total += log_det_W_list[i]
 
         loss = torch.sum(z*z)/(2*self.sigma*self.sigma) - log_s_total - log_det_W_total

@@ -29,10 +29,10 @@ import json
 import os
 import torch
 
-#=====START: ADDED FOR DISTRIBUTED======
+# =====START: ADDED FOR DISTRIBUTED======
 from distributed import init_distributed, apply_gradient_allreduce, reduce_tensor
 from torch.utils.data.distributed import DistributedSampler
-#=====END:   ADDED FOR DISTRIBUTED======
+# =====END:   ADDED FOR DISTRIBUTED======
 
 from torch.utils.data import DataLoader
 from glow import WaveGlow, WaveGlowLoss
@@ -46,13 +46,14 @@ def load_checkpoint(checkpoint_path, model, optimizer):
     optimizer.load_state_dict(checkpoint_dict['optimizer'])
     model_for_loading = checkpoint_dict['model']
     model.load_state_dict(model_for_loading.state_dict())
-    print("Loaded checkpoint '{}' (iteration {})" .format(
-          checkpoint_path, iteration))
+    print("Loaded checkpoint '{}' (iteration {})".format(
+        checkpoint_path, iteration))
     return model, optimizer, iteration
+
 
 def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
     print("Saving model and optimizer state at iteration {} to {}".format(
-          iteration, filepath))
+        iteration, filepath))
     model_for_saving = WaveGlow(**waveglow_config).cuda()
     model_for_saving.load_state_dict(model.state_dict())
     torch.save({'model': model_for_saving,
@@ -60,23 +61,24 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
                 'optimizer': optimizer.state_dict(),
                 'learning_rate': learning_rate}, filepath)
 
+
 def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
           sigma, iters_per_checkpoint, batch_size, seed, fp16_run,
           checkpoint_path, with_tensorboard):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    #=====START: ADDED FOR DISTRIBUTED======
+    # =====START: ADDED FOR DISTRIBUTED======
     if num_gpus > 1:
         init_distributed(rank, num_gpus, group_name, **dist_config)
-    #=====END:   ADDED FOR DISTRIBUTED======
+    # =====END:   ADDED FOR DISTRIBUTED======
 
     criterion = WaveGlowLoss(sigma)
     model = WaveGlow(**waveglow_config).cuda()
 
-    #=====START: ADDED FOR DISTRIBUTED======
+    # =====START: ADDED FOR DISTRIBUTED======
     if num_gpus > 1:
         model = apply_gradient_allreduce(model)
-    #=====END:   ADDED FOR DISTRIBUTED======
+    # =====END:   ADDED FOR DISTRIBUTED======
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -143,7 +145,7 @@ def train(num_gpus, rank, group_name, output_directory, epochs, learning_rate,
             if with_tensorboard and rank == 0:
                 logger.add_scalar('training_loss', reduced_loss, i + len(train_loader) * epoch)
 
-            if (iteration % iters_per_checkpoint == 0):
+            if iteration % iters_per_checkpoint == 0:
                 if rank == 0:
                     checkpoint_path = "{}/waveglow_{}".format(
                         output_directory, iteration)

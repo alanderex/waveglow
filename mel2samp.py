@@ -32,12 +32,13 @@ import torch
 import torch.utils.data
 import sys
 from scipy.io.wavfile import read
+import numpy as np
 
-# We're using the audio processing from TacoTron2 to make sure it matches
 sys.path.insert(0, 'tacotron2')
 from tacotron2.layers import TacotronSTFT
 
 MAX_WAV_VALUE = 32768.0
+
 
 def files_to_list(filename):
     """
@@ -49,12 +50,15 @@ def files_to_list(filename):
     files = [f.rstrip() for f in files]
     return files
 
+
 def load_wav_to_torch(full_path):
     """
     Loads wavdata into torch array
     """
     sampling_rate, data = read(full_path)
-    return torch.from_numpy(data).float(), sampling_rate
+    audio = torch.from_numpy(data.astype(np.float32))
+    print(full_path, data.flags)
+    return audio, sampling_rate
 
 
 class Mel2Samp(torch.utils.data.Dataset):
@@ -62,6 +66,7 @@ class Mel2Samp(torch.utils.data.Dataset):
     This is the main class that calculates the spectrogram and returns the
     spectrogram, audio pair.
     """
+
     def __init__(self, training_files, segment_length, filter_length,
                  hop_length, win_length, sampling_rate, mel_fmin, mel_fmax):
         self.audio_files = files_to_list(training_files)
@@ -95,7 +100,7 @@ class Mel2Samp(torch.utils.data.Dataset):
         if audio.size(0) >= self.segment_length:
             max_audio_start = audio.size(0) - self.segment_length
             audio_start = random.randint(0, max_audio_start)
-            audio = audio[audio_start:audio_start+self.segment_length]
+            audio = audio[audio_start:audio_start + self.segment_length]
         else:
             audio = torch.nn.functional.pad(audio, (0, self.segment_length - audio.size(0)), 'constant').data
 
@@ -106,6 +111,7 @@ class Mel2Samp(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.audio_files)
+
 
 # ===================================================================
 # Takes directory of clean audio and makes directory of spectrograms
